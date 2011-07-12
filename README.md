@@ -2,6 +2,7 @@ Consolidation of behavior and best practices for implementing controllers in exp
 
 You may want a lighter-weight controller.  The goal here is to be as lightweight as possible while
 still supporting:
+
 * DRY URL and view helpers
 * Database / database model access
 * Others as necessary.
