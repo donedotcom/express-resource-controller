@@ -22,6 +22,7 @@ var Controller = module.exports = function Controller(server, name, input, opts)
   this.customActions = {};
   this.customActionParams = {};
   this.actions = {};
+  this.actionLocals = opts;
   this.app = server;
   this.name = name;
   
@@ -31,16 +32,11 @@ var Controller = module.exports = function Controller(server, name, input, opts)
     this.createAction(name, fn);
   }
   
-  if(input.autoload) {
-    this.actions.load = input.autoload;
-    delete input.autoload;
-  }
-  
   // Ensure that custom actions come first -- without this, there is a risk that
   // get /forums/:id comes before get /forums/design, for example, and you can't
   // call your custom actions.
-  this.resource = this.app.resource(this.name, null);
-  
+
+  this.resource = this.app.resource(this.name, null);  
   for(var name in input.customActions) {
     var action = input.customActions[name];
     this.createCustomAction(name, action.method, action.scope, input[name]);
@@ -53,19 +49,13 @@ var Controller = module.exports = function Controller(server, name, input, opts)
     var action = this.actions[name];
     this.resource.mapDefaultAction(name, action); // private API
   }  
-
+  
+  if(input.autoload) {
+    this.resource.load(this.createAutoloadRuntime(input.autoload));
+  }
+  
   this.resource.controller = this;  
   return this.resource;  
-}
-
-/**
- * Define the autoload function for this controller
- *
- * @param {Function} fn
- * @api public
- */
-Controller.prototype.autoload = function(fn) {
-  this.actions['load'] = fn;
 }
 
 /**
@@ -121,16 +111,42 @@ Controller.prototype.createCustomAction = function(name, method, scope, fn) {
  */
 Controller.prototype.createActionRuntime = function(actionName, fn) {
   var errorHandler = this.createErrorHandler(actionName);
+    
   return function(req, res) {
-    // TODO: use this somehow.  createRenderFunction(res.render, actionName);
     var locals = {
       app: this.app,
       render: this.createRenderFunction(req, res, actionName),
-      checkError: errorHandler,
+      handleError: errorHandler,
     };
-    locals = utils.merge(locals, this.app.resource.path);    
+    locals = utils.merge(this.actionLocals, locals);
+    locals = utils.merge(locals, this.app.resource.path);
     fn.call(locals, req, res);
   }.bind(this);
+}
+
+/**
+ * Create runtime for autoload
+ @ param {Function} fn
+ */
+Controller.prototype.createAutoloadRuntime = function(fn) {
+  var errorHandler = this.createErrorHandler('autoload');
+  
+  return (function(req, id, callback) {
+    console.log("reqidcb: " + req + " / " + id + " / " + callback);
+    var locals = {
+      app: this.app,
+      handleError: errorHandler,
+    };
+    locals = utils.merge(this.actionLocals, locals);
+    locals = utils.merge(locals, this.app.resource.path);
+    if (2 === fn.length) {
+      console.log("***7***");
+      fn.call(locals, id, callback);
+    } else {
+      console.log("***8***");
+      fn.call(locals, req, id, callback);
+    }
+  }.bind(this));
 }
 
 /**
@@ -169,20 +185,7 @@ Controller.prototype.createErrorHandler = function(actionName) {
     return false;
   }
 }
-
-/*
-function runAction(self, req, res, fn) {
-  if (req.session.currentUserId) {
-    self.db.User.findById(req.session.currentUserId.toString(), function(err, user) {
-      req.currentUser = user;
-      fn.call(self, req, res);
-    });
-  } else {
-    fn.call(self, req, res);
-  }
-}
-*/
-
+ 
 express.HTTPServer.prototype.controller =
 express.HTTPSServer.prototype.controller = function(name, input, opts){
   return new Controller(this, name, input, opts);
