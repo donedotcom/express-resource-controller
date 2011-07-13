@@ -1,0 +1,16 @@
+{ "name": "express-resource-controller",
+  "description": "Best practices controller for express-resource",
+  "version": "0.0.1",
+  "author": "Paul Covell <paul@done.com>",
+  "dependencies": { "express-resource": "0.2.x" },
+  "devDependencies": {
+    "connect": "1.4.x",
+    "express": "2.3.x",
+    "expresso": "0.7.x",
+    "jade": "0.12.x",
+    "qs": "0.1.x",
+    "should": ">= 0.0.1"
+  },
+  "keywords": ["express", "rest", "resource"],
+  "main": "index"
+}
