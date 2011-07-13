@@ -2,7 +2,6 @@ Consolidation of behavior and best practices for implementing controllers in exp
 
 You may want a lighter-weight controller.  The goal here is to be as lightweight as possible while
 still supporting:
-<<<<<<< HEAD
   * DRY URL and view helpers:
     - In your controller actions, you can use this.render() to get the default view ({view dir}/<resource>/<action>)
     - In your controller actions, you can use this.users_path() to get the path to the users object -- more on
