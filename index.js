@@ -124,6 +124,7 @@ Controller.prototype.createActionRuntime = function(actionName, fn) {
   return function(req, res) {
     // TODO: use this somehow.  createRenderFunction(res.render, actionName);
     var locals = {
+      app: this.app,
       render: this.createRenderFunction(req, res, actionName),
       checkError: errorHandler,
     };
