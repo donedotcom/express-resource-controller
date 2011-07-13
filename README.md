@@ -146,12 +146,14 @@ exports.customActions = {
 If you want to use the route helpers (users_path(), etc) in your views you can include this helper file:
 
 In server.js:
+
 ```javascript
 // https://gist.github.com/1078292
 app.resource.dynamicHelpers = require(process.cwd() + '/app/helpers/resourceful_urls');
 ```
 
 In your view (example in jade):
+
 ```jade
 li= a(href=users_path()) Users
 ```
