@@ -118,7 +118,7 @@ Controller.prototype.createActionRuntime = function(actionName, fn) {
       render: this.createRenderFunction(req, res, actionName),
       handleError: errorHandler,
     };
-    locals = utils.merge(this.actionLocals, locals);
+    locals = utils.merge(locals, this.actionLocals);
     locals = utils.merge(locals, this.app.resource.path);
     fn.call(locals, req, res);
   }.bind(this);
@@ -132,18 +132,15 @@ Controller.prototype.createAutoloadRuntime = function(fn) {
   var errorHandler = this.createErrorHandler('autoload');
   
   return (function(req, id, callback) {
-    console.log("reqidcb: " + req + " / " + id + " / " + callback);
     var locals = {
       app: this.app,
       handleError: errorHandler,
     };
-    locals = utils.merge(this.actionLocals, locals);
+    locals = utils.merge(locals, this.actionLocals);
     locals = utils.merge(locals, this.app.resource.path);
     if (2 === fn.length) {
-      console.log("***7***");
       fn.call(locals, id, callback);
     } else {
-      console.log("***8***");
       fn.call(locals, req, id, callback);
     }
   }.bind(this));
