@@ -130,20 +130,22 @@ Controller.prototype.createActionRuntime = function(actionName, fn) {
  */
 Controller.prototype.createAutoloadRuntime = function(fn) {
   var errorHandler = this.createErrorHandler('autoload');
-  
-  return (function(req, id, callback) {
-    var locals = {
-      app: this.app,
-      handleError: errorHandler,
-    };
-    locals = utils.merge(locals, this.actionLocals);
-    locals = utils.merge(locals, this.app.resource.path);
-    if (2 === fn.length) {
+  var locals = {
+    app: this.app,
+    handleError: errorHandler,
+  };
+  locals = utils.merge(locals, this.actionLocals);
+  locals = utils.merge(locals, this.app.resource.path);
+
+  if (2 == fn.length) {
+    return function(id, callback) {
       fn.call(locals, id, callback);
-    } else {
+    }
+  } else {
+    return function(req, id, callback) {
       fn.call(locals, req, id, callback);
     }
-  }.bind(this));
+  }
 }
 
 /**
