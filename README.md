@@ -11,6 +11,8 @@ still supporting:
       resourceful route generation in my fork of express-resource, hopefully to be included.  These helpers can
       also be made available in the views for total DRY nirvana.
   * Database / database model access
+		- You can make local variables available to your views by passing an object that will be added to the controller
+		  parameter when the action is called.  See the example below for usage.  
     - Not yet implemented
   * currentUser loading...?
     - Not yet implemented
@@ -25,7 +27,8 @@ let's discuss.
 
 Updates
 -------
-Replaced 'this' with a controller parameter to reduce hassle with anonymous helper functions that change the context. (No longer need to use function() { ... }.bind(this)).
+27 July 2011: Replaced 'this' with a 'controller' parameter the method to reduce hassle with anonymous helper functions that change the context. (No longer need to use function() { ... }.bind(this)).  Now you use controller.users_path(), for example.  A
+27 July 2011: Updated database model access in Readme.
 
 Example
 --------
@@ -43,9 +46,10 @@ require('express-resource-controller');
 
 // ...
 
-function loadControllers() {
+function loadControllers(database) {
   var controllers = {};
   var path = __dirname + '/app/controllers';
+	var locals = {db: database};
 
   fs.readdirSync(path).forEach(function(filename) {
     var name = filename.split('_');
@@ -53,7 +57,7 @@ function loadControllers() {
       // Skip controllers.js
       var name = name[0],
           controller = require([path, filename].join('/')); // app.controller calls app.resource();
-      controllers[name] = app.controller(name, controller);
+      controllers[name] = app.controller(name, controller, locals);
     }
   });
   controllers.forums.add(controllers.threads);  // Nested resources  
@@ -65,34 +69,34 @@ function loadControllers() {
 ```javascript
 var db = require('../../db'); // load your DB models -- TODO: can this be pushed into controller somehow?
 
-exports.index = function(req, res){
+exports.index = function(req, res, controller){
   db.User.find({}, function(err, records) {
     /**
      * (Note 1)
      */
-    if (this.handleError(err)) {
+    if (controller.handleError(err)) {
       this.flash('warn', 'Please try again later.');
       /**
        * (Note 2)
        */
-      res.redirect(this.users_path());
+      res.redirect(controller.users_path());
     }
     /**
      * (Note 3)
      */
-    this.render({users: records});  
+    controller.render({users: records});  
   });
 };
 
 /**
- * Note 1: this.handleError() provides a consistent way to test and log callback errors, and will return true
+ * Note 1: controller.handleError() provides a consistent way to test and log callback errors, and will return true
  * if (err) so you can handle further if desired.
  *
- * Note 2: Compare this.users_path() with '/users'.  Ok, simple example, but compare 
- * this.edit_forum_thread_path(forum, thread) with '/forums/' + forum._id + '/threads/' + thread.id + '/edit'.
+ * Note 2: Compare controller.users_path() with '/users'.  Ok, simple example, but compare 
+ * controller.edit_forum_thread_path(forum, thread) with '/forums/' + forum._id + '/threads/' + thread.id + '/edit'.
  * DRYer?  At least less prone to error.
  *
- * Note 3: Compare this.render(locals) with res.render('users/index').  We already know we're the users controller
+ * Note 3: Compare controller.render(locals) with res.render('users/index').  We already know we're the users controller
  * and the index action, right?  Provides reasonable defaults: load from 'views/users/index'.   You can still call 
  * with your normal res.render() arguments: res.render('users/index', {layout: null}); for full control.  
  * Bonus: if you provide with a relative pathname, it assumes the controller part:
@@ -100,28 +104,31 @@ exports.index = function(req, res){
  * will look for 'views/users/edit'.
  */ 
 
-exports.login = function(req, res) {
+exports.login = function(req, res, controller) {
   req.session.currentUserId = req.user._id;  // Loaded by autoload
-  res.redirect(this.forums_path());
+  res.redirect(controller.forums_path());
 };
 
-exports.logout = function(req, res) {
+exports.logout = function(req, res, controller) {
   req.session.currentUserId = null;
-  res.redirect(this.forums_path()); 
+  res.redirect(controller.forums_path()); 
 };
 
-exports.create = function(req, res){
-  var user = db.User(req.body);
+/**
+ * (Note 4)
+ */
+exports.create = function(req, res, controller){
+  var user = controller.db.User(req.body); 
   user.save(function(err) {
-    this.handleError(err);
+    controller.handleError(err);
     req.session.currentUserId = user._id;
-    res.redirect(this.forums_path());
+    res.redirect(controller.forums_path());
   });
 };
 
 exports.destroy = function(req, res){
   req.user.remove();
-  res.redirect(this.forums_path());
+  res.redirect(controller.forums_path());
 };
 
 exports.autoload = function(id, callback) {
@@ -137,6 +144,8 @@ exports.customActions = {
 };
 
 /**
+ * Note 4: controller.db is available because we passed it in app.controller(..., locals).
+ *
  * Note 5: Custom actions are automatically added to the route as long as you declare them here.
  * Custom actions are always added *before* basic actions, so that you always get 
  * /users/logout ==> logout() instead of /users/logout ==> show({id: 'logout'}).
