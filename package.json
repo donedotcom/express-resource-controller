@@ -9,6 +9,7 @@
     "expresso": "0.7.x",
     "jade": "0.12.x",
     "qs": "0.1.x",
+    "lingo": "0.0.x",
     "should": ">= 0.0.1"
   },
   "keywords": ["express", "rest", "resource"],

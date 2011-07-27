@@ -26,10 +26,14 @@ var Controller = module.exports = function Controller(server, name, input, opts)
   this.app = server;
   this.name = name;
   
+  var inputName, fn, action;
+  
   // Handle custom configurations first
-  for(var name in input) {
-    var fn = input[name];
-    this.createAction(name, fn);
+  for(inputName in input) {
+    if(input.hasOwnProperty(inputName)) {
+      fn = input[inputName];
+      this.createAction(inputName, fn);
+    }
   }
   
   // Ensure that custom actions come first -- without this, there is a risk that
@@ -37,17 +41,21 @@ var Controller = module.exports = function Controller(server, name, input, opts)
   // call your custom actions.
 
   this.resource = this.app.resource(this.name, null);  
-  for(var name in input.customActions) {
-    var action = input.customActions[name];
-    this.createCustomAction(name, action.method, action.scope, input[name]);
+  for(inputName in input.customActions) {
+    if(input.customActions.hasOwnProperty(inputName)) {
+      action = input.customActions[inputName];
+      this.createCustomAction(inputName, action.method, action.scope, input[inputName]);
     
-    action = this.customActions[name];
-    this.resource.map(action.method, action.path, action.fn);    
+      action = this.customActions[inputName];
+      this.resource.map(action.method, action.path, action.fn);    
+    }
   }  
   
-  for(var name in this.actions) {
-    var action = this.actions[name];
-    this.resource.mapDefaultAction(name, action); // private API
+  for(inputName in this.actions) {
+    if(this.actions.hasOwnProperty(inputName)) {
+      action = this.actions[inputName];
+      this.resource.mapDefaultAction(inputName, action); // private API
+    }
   }  
   
   if(input.autoload) {
@@ -56,7 +64,7 @@ var Controller = module.exports = function Controller(server, name, input, opts)
   
   this.resource.controller = this;  
   return this.resource;  
-}
+};
 
 /**
  * Define an action (one of the standard actions defined by Express Resource)
@@ -72,7 +80,7 @@ Controller.prototype.createAction = function(name, fn) {
   }
   
   this.actions[name] = this.createActionRuntime(name, fn);
-}
+};
 
 /**
  * Define a custom action
@@ -101,7 +109,7 @@ Controller.prototype.createCustomAction = function(name, method, scope, fn) {
     method: method,
     fn: this.createActionRuntime(name, fn)
   };
-}
+};
 
 /**
  * Create the runtime function for the action.  
@@ -122,7 +130,7 @@ Controller.prototype.createActionRuntime = function(actionName, fn) {
     locals = utils.merge(locals, this.app.resource.path);
     fn.call(locals, req, res);
   }.bind(this);
-}
+};
 
 /**
  * Create runtime for autoload
@@ -137,16 +145,16 @@ Controller.prototype.createAutoloadRuntime = function(fn) {
   locals = utils.merge(locals, this.actionLocals);
   locals = utils.merge(locals, this.app.resource.path);
 
-  if (2 == fn.length) {
+  if (2 === fn.length) {
     return function(id, callback) {
       fn.call(locals, id, callback);
-    }
+    };
   } else {
     return function(req, id, callback) {
       fn.call(locals, req, id, callback);
-    }
+    };
   }
-}
+};
 
 /**
  * Create a custom render function for this action so it defaults to the right directory.
@@ -167,7 +175,7 @@ Controller.prototype.createRenderFunction = function(req, res, actionName) {
     Array.prototype.unshift.call(arguments, viewName);
     res.render.apply(res, arguments);
   }.bind(this);  
-}
+};
 
 /**
  * Create the error handler for the action.  Provides consistency for general error reporting.  
@@ -182,10 +190,10 @@ Controller.prototype.createErrorHandler = function(actionName) {
       return true;
     }
     return false;
-  }
-}
+  };
+};
  
 express.HTTPServer.prototype.controller =
 express.HTTPSServer.prototype.controller = function(name, input, opts){
   return new Controller(this, name, input, opts);
-}
+};
