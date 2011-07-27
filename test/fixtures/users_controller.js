@@ -1,23 +1,23 @@
-exports.index = function(req, res){
+exports.index = function(req, res, controller){
   var locals = {
     value: 'soho'
   }
-  this.render(locals);
+  controller.render(locals);
 };
 
-exports.show = function(req, res){
-  this.render(process.cwd() + '/test/fixtures/absolute_view');
+exports.show = function(req, res, controller){
+  controller.render(process.cwd() + '/test/fixtures/absolute_view');
 };
 
-exports.login = function(req, res){  
-  res.send(this.users_path());
+exports.login = function(req, res, controller){  
+  res.send(controller.users_path());
 };
 
-exports.logout = function(req, res){
+exports.logout = function(req, res, controller){
   var locals = {
     value: 'coffee'
   }
-  this.render('relative', locals);
+  controller.render('relative', locals);
 };
 
 exports.customActions = {

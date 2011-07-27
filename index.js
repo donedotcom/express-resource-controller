@@ -128,7 +128,7 @@ Controller.prototype.createActionRuntime = function(actionName, fn) {
     };
     locals = utils.merge(locals, this.actionLocals);
     locals = utils.merge(locals, this.app.resource.path);
-    fn.call(locals, req, res);
+    fn.call(locals, req, res, locals);
   }.bind(this);
 };
 
